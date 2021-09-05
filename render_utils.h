@@ -26,7 +26,7 @@ inline void set_viewport(SDL_Renderer* r, int x, int y, int w, int h) {
 }
 
 inline void set_viewport(SDL_Renderer* r, SDL_Rect rect) {
-    SDL_RenderSetViewPort(r, &rect);
+    SDL_RenderSetViewport(r, &rect);
 }
 
 inline void draw_point(SDL_Renderer* r, int x, int y) {
