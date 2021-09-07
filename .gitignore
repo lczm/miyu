@@ -45,4 +45,6 @@ _deps
 
 miyu
 tags
-build/
+./build/
+!./build/*.png
+

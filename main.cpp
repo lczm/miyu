@@ -7,8 +7,12 @@
 
 #include "render_utils.h"
 
+using std::vector;
+using std::string;
+
 const int SCREEN_WIDTH  = 1280;
 const int SCREEN_HEIGHT = 800;
+const string MAIN_ATLAS = "./0x72_DungeonTilesetII_v1.4.png";
 
 // Window that to be rendered to
 SDL_Window*  g_window = nullptr;
@@ -53,7 +57,7 @@ bool init_window() {
     return true;
 }
 
-SDL_Texture* load_texture(std::string path) {
+SDL_Texture* load_texture(string path) {
     // Final texture
     SDL_Texture* new_texture = nullptr;
 
@@ -103,9 +107,9 @@ int main(int argv, char** args) {
         printf("Failed to initialize\n");
         return 0;
     }
+
     // Load media
-    // auto test = load_surface("preview.png");
-    g_texture = load_texture("preview.png");
+    g_texture = load_texture(MAIN_ATLAS);
 
     while (!quit) {
         // Handle events on queue
@@ -149,7 +153,7 @@ int main(int argv, char** args) {
             draw_point(g_renderer, SCREEN_WIDTH/2, i);
         }
 
-        std::vector<SDL_Point> points;
+        vector<SDL_Point> points;
         for (int i = 0; i < SCREEN_WIDTH; i++) {
             points.push_back({i, 50});
         }
