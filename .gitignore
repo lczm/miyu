@@ -47,4 +47,7 @@ miyu
 tags
 ./build/
 !./build/*.png
+.vs
+out
+CMakeSettings.json
 
