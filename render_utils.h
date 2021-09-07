@@ -4,6 +4,34 @@
 #include <SDL_image.h>
 #include <string>
 
+// Some documentation on how to use this:
+// - Render texture to screen
+// draw_texture(g_renderer, g_texture);
+// - Render red filled quad
+// set_render_color(g_renderer, 255, 0, 0);
+// draw_rect(g_renderer, {SCREEN_WIDTH/4, SCREEN_HEIGHT/4, SCREEN_WIDTH/2, SCREEN_HEIGHT/2});
+// - Render green outlined quad
+// set_render_color(g_renderer, 0, 255, 0);
+// draw_rect_outline(g_renderer, {SCREEN_WIDTH/6,
+//                                SCREEN_HEIGHT/6,
+//                                SCREEN_WIDTH*2/3,
+//                                SCREEN_HEIGHT*2/3});
+// - Set render color
+// set_render_color(g_renderer, 255, 255, 0);
+// - Draw some points
+// for (int i = 0; i < SCREEN_HEIGHT; i+=4) {
+//     draw_point(g_renderer, SCREEN_WIDTH/2, i);
+// }
+// vector<SDL_Point> points;
+// for (int i = 0; i < SCREEN_WIDTH; i++) {
+//     points.push_back({i, 50});
+// }
+// - Clear screen
+// clear_renderer(g_renderer);
+// - Update screen
+// flush_renderer(g_renderer);
+
+
 inline void clear_renderer(SDL_Renderer* r) {
     SDL_RenderClear(r);
 }
