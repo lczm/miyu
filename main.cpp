@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <string>
 #include <vector>
+#include <chrono>
 #include <iostream>
 
 #include "def.h"
@@ -11,6 +12,11 @@
 // Window that to be rendered to
 SDL_Window*  g_window = nullptr;
 SDL_Renderer* g_renderer = nullptr;
+
+high_resolution_clock::time_point timer;
+f32 dt        = 0;
+f32 second_dt = 0;
+i32 frames    = 0;
 
 struct Position {
     f32 x = 0;
@@ -173,6 +179,9 @@ int main(int argv, char** args) {
         return 0;
     }
 
+    // Init the timer
+    timer = high_resolution_clock::now();
+
     // Load assets
     TextureAtlas atlas = load_texture(MAIN_ATLAS);
     atlas.per_x = 16;
@@ -212,6 +221,19 @@ int main(int argv, char** args) {
                 }
             }
         }
+
+        auto now = high_resolution_clock::now();
+        duration<float> elapsed = now - timer;
+        dt = elapsed.count();
+        timer = now;
+        second_dt += dt;
+
+        if (second_dt >= 1.0f) {
+            second_dt -= 1.0f;
+            frames = 0;
+        }
+
+        cout << dt << endl;
 
         // Clear screen
         clear_renderer(g_renderer);

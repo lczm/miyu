@@ -3,11 +3,14 @@
 #include <vector>
 #include <string>
 #include <iostream>
+#include <chrono>
 
 using std::vector;
 using std::string;
 using std::cout;
 using std::endl;
+using std::chrono::duration;
+using std::chrono::high_resolution_clock;
 
 using i32 = int32_t;
 using u32 = uint32_t;
