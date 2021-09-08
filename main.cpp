@@ -3,36 +3,37 @@
 #include <stdio.h>
 #include <string>
 #include <vector>
+#include <iostream>
 
+#include "def.h"
 #include "render_utils.h"
-
-using std::vector;
-using std::string;
-
-using i32 = int32_t;
-using u32 = uint32_t;
-using f32 = float_t;
-
-const int SCREEN_WIDTH  = 1280;
-const int SCREEN_HEIGHT = 800;
-const string MAIN_ATLAS = "./0x72_DungeonTilesetII_v1.4.png";
 
 // Window that to be rendered to
 SDL_Window*  g_window = nullptr;
 SDL_Renderer* g_renderer = nullptr;
 
-struct TextureAtlas;
-
-struct TextureGrid {
+struct Position {
     f32 x = 0;
     f32 y = 0;
-    f32 w = 0;
-    f32 h = 0;
+};
+
+struct AnimatedSprite {
+    // Rectangle to render onto the screen with
+    SDL_Rect dest;
+    // Index of the animation_coordinate to draw
+    i32 index = 0;
     f32 scale = 1.0f;
-    TextureAtlas* atlas = nullptr;
+    // 2D X/Y coordinates
+    Position pos;
+    // X/Y coordinates of the animated sprites
+    vector<Position> animation_coordinates;
 };
 
 struct TextureAtlas {
+    // Rectangle to clip the atlas with
+    SDL_Rect src;
+
+    // Width and height of the atlas
     i32 w, h = 0;
     i32 access = 0;
     u32 format = 0;
@@ -45,14 +46,11 @@ struct TextureAtlas {
 
     // For every texture that uses each TextureAtlas, add them to this vector
     // This is to make rendering more efficient
-    vector<TextureGrid*> grids;
+    vector<AnimatedSprite*> sprites;
     SDL_Texture* texture = nullptr;
 };
 
-struct Player {
-};
-
-static vector<TextureAtlas> textures;
+static vector<TextureAtlas> atlass;
 
 bool init_window() {
     // Initialize SDL
@@ -125,10 +123,10 @@ TextureAtlas load_texture(string path) {
 
 void close_window() {
     // Free loaded image
-    for (TextureAtlas t : textures) {
-        SDL_DestroyTexture(t.texture);
+    for (TextureAtlas ta : atlass) {
+        SDL_DestroyTexture(ta.texture);
         // Reset the pointer, just in case this gets used again after this
-        t.texture = nullptr;
+        ta.texture = nullptr;
     }
 
     // Destroy window
@@ -142,33 +140,24 @@ void close_window() {
     SDL_Quit();
 }
 
-inline void draw_texture(SDL_Renderer* r, TextureAtlas* t, TextureGrid* tg) {
-    // TODO : SDL_RenderCopy takes in a pointer to SDL_Rect, there is no need
-    // to keep constructing this.
-    SDL_Rect src;
-    SDL_Rect dest;
-    src.x = tg->x;
-    src.y = tg->y;
-    src.w = tg->w * tg->scale;
-    src.h = tg->h * tg->scale;
+inline void draw_texture(SDL_Renderer* r, TextureAtlas* ta, AnimatedSprite* as) {
+    ta->src.x = as->animation_coordinates[as->index].y * ta->per_y;
+    ta->src.y = as->animation_coordinates[as->index].x * ta->per_x;
+    ta->src.w = ta->per_y;
+    ta->src.h = ta->per_x;
 
-    dest.x = tg->x;
-    dest.y = tg->y;
-    dest.w = tg->w * tg->scale;
-    dest.h = tg->h * tg->scale;
+    as->dest.x = as->pos.x;
+    as->dest.y = as->pos.y;
+    as->dest.w = ta->per_x * as->scale;
+    as->dest.h = ta->per_y * as->scale;
 
-    SDL_RenderCopy(r, t->texture, &src, &dest);
-    // SDL_RenderCopy(r, t->texture, {tg->x, tg->y, // source
-    //                                tg->w * tg->scale, tg->h * tg->scale},
-    //                               {tg->x, tg->y, // destination
-    //                                tg->w * tg->scale, tg->h * tg->scale});
+    SDL_RenderCopy(r, ta->texture, &ta->src, &as->dest);
 }
 
-void draw_texture_atlas(SDL_Renderer* r, vector<TextureAtlas> textures) {
-    for (TextureAtlas t : textures) {
-        for (TextureGrid* tg : t.grids) {
-            // set_viewport(r, tg.x, tg.y, tg.w, tg.h);
-            draw_texture(r, &t, tg);
+void draw_texture_atlas(SDL_Renderer* r, vector<TextureAtlas> atlass) {
+    for (TextureAtlas ta : atlass) {
+        for (AnimatedSprite* as : ta.sprites) {
+            draw_texture(r, &ta, as);
         }
     }
 }
@@ -191,7 +180,17 @@ int main(int argv, char** args) {
     atlas.total_x = 0;
     atlas.total_y = 0;
 
-    textures.push_back(atlas);
+    // Create AnimationSprite
+    AnimatedSprite sprite;
+    sprite.pos = {0.0f, 0.0f};
+    sprite.scale = 10.0f;
+    sprite.animation_coordinates.push_back({1.0f, 10.0f});
+    sprite.animation_coordinates.push_back({1.0f, 11.0f});
+
+    // Add AnimatedSprite into the TextureAtlas
+    atlas.sprites.push_back(&sprite);
+    // Add TextureAtlas into global list of TextureAtlas'
+    atlass.push_back(atlas);
 
     while (!quit) {
         // Handle events on queue
@@ -217,12 +216,8 @@ int main(int argv, char** args) {
         // Clear screen
         clear_renderer(g_renderer);
 
-        // Render texture to screen
-        for (TextureAtlas t : textures) {
-            // TODO : Check if i need to set viewport in the first place
-            // set_viewport(g_renderer, 0, 0, t.w, t.h);
-            draw_texture(g_renderer, t.texture);
-        }
+        // Draw all the textures
+        draw_texture_atlas(g_renderer, atlass);
 
         // Update screen
         flush_renderer(g_renderer);
