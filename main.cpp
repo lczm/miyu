@@ -37,6 +37,7 @@ struct AnimatedSprite {
     Position pos;
     // X/Y coordinates of the animated sprites
     vector<Position> animation_coordinates;
+    vector<Position> animation_offsets;
 };
 
 struct TextureAtlas {
@@ -151,17 +152,23 @@ void close_window() {
 }
 
 inline void draw_texture(SDL_Renderer* r, TextureAtlas* ta, AnimatedSprite* as) {
-    ta->src.x = as->animation_coordinates[as->index].y * ta->per_y;
-    ta->src.y = as->animation_coordinates[as->index].x * ta->per_x;
+    ta->src.x = as->animation_coordinates[as->index].y * ta->per_y
+        + as->animation_offsets[as->index].y;
+    ta->src.y = as->animation_coordinates[as->index].x * ta->per_x
+        + as->animation_offsets[as->index].x;
     ta->src.w = ta->per_y;
     ta->src.h = ta->per_x;
 
-    as->dest.x = as->pos.x;
-    as->dest.y = as->pos.y;
-    as->dest.w = ta->per_x * as->scale;
-    as->dest.h = ta->per_y * as->scale;
+    as->dest.x = as->pos.x + as->animation_offsets[as->index].y;
+    as->dest.y = as->pos.y + as->animation_offsets[as->index].x;
+    as->dest.w = (ta->per_x * as->scale);
+    as->dest.h = (ta->per_y * as->scale);
 
     SDL_RenderCopy(r, ta->texture, &ta->src, &as->dest);
+
+    // To debug textures
+    // set_render_color(r, 0, 0, 255);
+    // draw_rect_outline(r, as->dest);
 }
 
 void draw_texture_atlas(SDL_Renderer* r, vector<TextureAtlas> atlass) {
@@ -210,11 +217,24 @@ int main(int argv, char** args) {
 
     // Create AnimationSprite
     AnimatedSprite princess;
-    princess.pos = {0.0f, 0.0f};
+    princess.pos = {100.0f, 100.0f};
     princess.scale = 10.0f;
+    princess.animation_coordinates.push_back({1.0f, 8.0f});
+    princess.animation_coordinates.push_back({1.0f, 9.0f});
     princess.animation_coordinates.push_back({1.0f, 10.0f});
     princess.animation_coordinates.push_back({1.0f, 11.0f});
+    princess.animation_coordinates.push_back({1.0f, 12.0f});
+    princess.animation_coordinates.push_back({1.0f, 13.0f});
+    princess.animation_coordinates.push_back({1.0f, 14.0f});
+    princess.animation_coordinates.push_back({1.0f, 15.0f});
+    princess.animation_coordinates.push_back({1.0f, 16.0f});
     princess.max_index = princess.animation_coordinates.size();
+    // Create an offset vector that is the same size as the animation_coordinates
+    princess.animation_offsets = vector<Position>(princess.animation_coordinates.size(),
+                                                  Position());
+    // Add the offsets
+    princess.animation_offsets[5].x = -1;
+    princess.animation_offsets[8].x = -5;
 
     // Add AnimatedSprite into the TextureAtlas
     atlas.sprites.push_back(&princess);
@@ -241,6 +261,8 @@ int main(int argv, char** args) {
                 }
             }
         }
+
+        set_render_color(g_renderer, 0, 0, 0);
 
         auto now = high_resolution_clock::now();
         duration<float> elapsed = now - timer;
