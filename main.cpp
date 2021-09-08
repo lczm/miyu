@@ -29,6 +29,10 @@ struct AnimatedSprite {
     // Index of the animation_coordinate to draw
     i32 index = 0;
     f32 scale = 1.0f;
+    i32 max_index = 0;
+    // Change index every timer seconds
+    f32 cumu_dt  = 0.0f;
+    f32 interval = 0.1f;
     // 2D X/Y coordinates
     Position pos;
     // X/Y coordinates of the animated sprites
@@ -168,6 +172,21 @@ void draw_texture_atlas(SDL_Renderer* r, vector<TextureAtlas> atlass) {
     }
 }
 
+void update_entities(f32 dt, vector<TextureAtlas> atlass) {
+    for (TextureAtlas ta : atlass) {
+        for (AnimatedSprite* as : ta.sprites) {
+            as->cumu_dt += dt;
+            if (as->cumu_dt >= as->interval) {
+                as->index += 1;
+                if (as->index == as->max_index) {
+                    as->index -= as->max_index;
+                }
+                as->cumu_dt -= as->interval;
+            }
+        }
+    }
+}
+
 int main(int argv, char** args) {
     bool quit = false;
     // Event handler
@@ -190,14 +209,15 @@ int main(int argv, char** args) {
     atlas.total_y = 0;
 
     // Create AnimationSprite
-    AnimatedSprite sprite;
-    sprite.pos = {0.0f, 0.0f};
-    sprite.scale = 10.0f;
-    sprite.animation_coordinates.push_back({1.0f, 10.0f});
-    sprite.animation_coordinates.push_back({1.0f, 11.0f});
+    AnimatedSprite princess;
+    princess.pos = {0.0f, 0.0f};
+    princess.scale = 10.0f;
+    princess.animation_coordinates.push_back({1.0f, 10.0f});
+    princess.animation_coordinates.push_back({1.0f, 11.0f});
+    princess.max_index = princess.animation_coordinates.size();
 
     // Add AnimatedSprite into the TextureAtlas
-    atlas.sprites.push_back(&sprite);
+    atlas.sprites.push_back(&princess);
     // Add TextureAtlas into global list of TextureAtlas'
     atlass.push_back(atlas);
 
@@ -233,7 +253,10 @@ int main(int argv, char** args) {
             frames = 0;
         }
 
-        cout << dt << endl;
+        // Update all textures
+        update_entities(dt, atlass);
+
+        // cout << dt << endl;
 
         // Clear screen
         clear_renderer(g_renderer);
