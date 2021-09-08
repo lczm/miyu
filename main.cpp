@@ -18,49 +18,6 @@ f32 dt        = 0;
 f32 second_dt = 0;
 i32 frames    = 0;
 
-struct Position {
-    f32 x = 0;
-    f32 y = 0;
-};
-
-struct AnimatedSprite {
-    // Rectangle to render onto the screen with
-    SDL_Rect dest;
-    // Index of the animation_coordinate to draw
-    i32 index = 0;
-    f32 scale = 1.0f;
-    i32 max_index = 0;
-    // Change index every timer seconds
-    f32 cumu_dt  = 0.0f;
-    f32 interval = 0.1f;
-    // 2D X/Y coordinates
-    Position pos;
-    // X/Y coordinates of the animated sprites
-    vector<Position> animation_coordinates;
-    vector<Position> animation_offsets;
-};
-
-struct TextureAtlas {
-    // Rectangle to clip the atlas with
-    SDL_Rect src;
-
-    // Width and height of the atlas
-    i32 w, h = 0;
-    i32 access = 0;
-    u32 format = 0;
-    // Pixels per frame - needs to be manually inputted
-    i32 per_x, per_y = 0;
-    // Total rows and columns - needs to be manually inputted
-    i32 total_x, total_y = 0;
-    // z-index for the future, if needed
-    i32 z = 0;
-
-    // For every texture that uses each TextureAtlas, add them to this vector
-    // This is to make rendering more efficient
-    vector<AnimatedSprite*> sprites;
-    SDL_Texture* texture = nullptr;
-};
-
 static vector<TextureAtlas> atlass;
 
 bool init_window() {
@@ -151,34 +108,6 @@ void close_window() {
     SDL_Quit();
 }
 
-inline void draw_texture(SDL_Renderer* r, TextureAtlas* ta, AnimatedSprite* as) {
-    ta->src.x = as->animation_coordinates[as->index].y * ta->per_y
-        + as->animation_offsets[as->index].y;
-    ta->src.y = as->animation_coordinates[as->index].x * ta->per_x
-        + as->animation_offsets[as->index].x;
-    ta->src.w = ta->per_y;
-    ta->src.h = ta->per_x;
-
-    as->dest.x = as->pos.x + as->animation_offsets[as->index].y;
-    as->dest.y = as->pos.y + as->animation_offsets[as->index].x;
-    as->dest.w = (ta->per_x * as->scale);
-    as->dest.h = (ta->per_y * as->scale);
-
-    SDL_RenderCopy(r, ta->texture, &ta->src, &as->dest);
-
-    // To debug textures
-    // set_render_color(r, 0, 0, 255);
-    // draw_rect_outline(r, as->dest);
-}
-
-void draw_texture_atlas(SDL_Renderer* r, vector<TextureAtlas> atlass) {
-    for (TextureAtlas ta : atlass) {
-        for (AnimatedSprite* as : ta.sprites) {
-            draw_texture(r, &ta, as);
-        }
-    }
-}
-
 void update_entities(f32 dt, vector<TextureAtlas> atlass) {
     for (TextureAtlas ta : atlass) {
         for (AnimatedSprite* as : ta.sprites) {
@@ -262,7 +191,7 @@ int main(int argv, char** args) {
             }
         }
 
-        set_render_color(g_renderer, 0, 0, 0);
+        set_render_color(g_renderer, 255, 255, 255);
 
         auto now = high_resolution_clock::now();
         duration<float> elapsed = now - timer;
@@ -277,8 +206,6 @@ int main(int argv, char** args) {
 
         // Update all textures
         update_entities(dt, atlass);
-
-        // cout << dt << endl;
 
         // Clear screen
         clear_renderer(g_renderer);
