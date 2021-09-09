@@ -4,6 +4,8 @@
 #include <SDL_image.h>
 #include <string>
 
+#include "def.h"
+
 // Some documentation on how to use this:
 // - Render texture to screen
 // draw_texture(g_renderer, g_texture);
@@ -94,4 +96,32 @@ inline void draw_rect_outline(SDL_Renderer* r, int x, int y, int w, int h) {
 
 inline void draw_texture(SDL_Renderer* r, SDL_Texture* t) {
     SDL_RenderCopy(r, t, nullptr, nullptr);
+}
+
+inline void draw_texture(SDL_Renderer* r, TextureAtlas* ta, AnimatedSprite* as) {
+    ta->src.x = as->animation_coordinates[as->index].y * ta->per_y
+        + as->animation_offsets[as->index].y;
+    ta->src.y = as->animation_coordinates[as->index].x * ta->per_x
+        + as->animation_offsets[as->index].x;
+    ta->src.w = ta->per_y;
+    ta->src.h = ta->per_x;
+
+    as->dest.x = as->pos.x + as->animation_offsets[as->index].y;
+    as->dest.y = as->pos.y + as->animation_offsets[as->index].x;
+    as->dest.w = (ta->per_x * as->scale);
+    as->dest.h = (ta->per_y * as->scale);
+
+    SDL_RenderCopy(r, ta->texture, &ta->src, &as->dest);
+
+    // To debug textures
+    // set_render_color(r, 0, 0, 255);
+    // draw_rect_outline(r, as->dest);
+}
+
+void draw_texture_atlas(SDL_Renderer* r, vector<TextureAtlas> atlass) {
+    for (TextureAtlas ta : atlass) {
+        for (Entity* e : ta.entities) {
+            draw_texture(r, &ta, &e->as);
+        }
+    }
 }

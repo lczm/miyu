@@ -3,56 +3,76 @@
 #include <stdio.h>
 #include <string>
 #include <vector>
+#include <chrono>
+#include <iostream>
 
-#include "render_utils.h"
-
-using std::vector;
-using std::string;
-
-using i32 = int32_t;
-using u32 = uint32_t;
-using f32 = float_t;
-
-const int SCREEN_WIDTH  = 1280;
-const int SCREEN_HEIGHT = 800;
-const string MAIN_ATLAS = "./0x72_DungeonTilesetII_v1.4.png";
+#include "def.h"
+#include "render_util.h"
 
 // Window that to be rendered to
 SDL_Window*  g_window = nullptr;
 SDL_Renderer* g_renderer = nullptr;
 
-struct TextureAtlas;
+high_resolution_clock::time_point timer;
+f32 dt        = 0;
+f32 second_dt = 0;
+i32 frames    = 0;
 
-struct TextureGrid {
-    f32 x = 0;
-    f32 y = 0;
-    f32 w = 0;
-    f32 h = 0;
-    f32 scale = 1.0f;
-    TextureAtlas* atlas = nullptr;
+// Using a set to store the key values is definitely not the most
+// efficient way to go about doing this. But it is very convenient
+// Performance will definitely not be bottle-necked here so this should
+// be fine.
+// static set<SDL_Keycode>     keys;
+static vector<TextureAtlas> atlass;
+
+struct Keys {
+    // i32 keys[1073742106];
+    unordered_map<i32, i32> keys;
+
+    void handle_down(i32 code) {
+        keys[code] = 1;
+    }
+
+    void handle_up(i32 code) {
+        keys[code] = 0;
+    }
+
+    bool is_down(i32 code) {
+        if (keys.find(code) != keys.end() && keys[code] == 1) {
+            return true;
+        }
+        return false;
+    }
 };
 
-struct TextureAtlas {
-    i32 w, h = 0;
-    i32 access = 0;
-    u32 format = 0;
-    // Pixels per frame - needs to be manually inputted
-    i32 per_x, per_y = 0;
-    // Total rows and columns - needs to be manually inputted
-    i32 total_x, total_y = 0;
-    // z-index for the future, if needed
-    i32 z = 0;
+static Keys keys;
 
-    // For every texture that uses each TextureAtlas, add them to this vector
-    // This is to make rendering more efficient
-    vector<TextureGrid*> grids;
-    SDL_Texture* texture = nullptr;
+struct State {
 };
 
-struct Player {
-};
+struct Princess : Entity {
+    void update(f32 dt) {
+        if (keys.is_down(SDLK_DOWN)) {
+            as.index = 0;
+        }
 
-static vector<TextureAtlas> textures;
+        if (keys.is_down(SDLK_w)) {
+            as.pos.y -= dt * 100.0f;
+        }
+
+        if (keys.is_down(SDLK_a)) {
+            as.pos.x -= dt * 100.0f;
+        }
+
+        if (keys.is_down(SDLK_s)) {
+            as.pos.y += dt * 100.0f;
+        }
+
+        if (keys.is_down(SDLK_d)) {
+            as.pos.x += dt * 100.0f;
+        }
+    };
+};
 
 bool init_window() {
     // Initialize SDL
@@ -125,10 +145,10 @@ TextureAtlas load_texture(string path) {
 
 void close_window() {
     // Free loaded image
-    for (TextureAtlas t : textures) {
-        SDL_DestroyTexture(t.texture);
+    for (TextureAtlas ta : atlass) {
+        SDL_DestroyTexture(ta.texture);
         // Reset the pointer, just in case this gets used again after this
-        t.texture = nullptr;
+        ta.texture = nullptr;
     }
 
     // Destroy window
@@ -142,47 +162,35 @@ void close_window() {
     SDL_Quit();
 }
 
-inline void draw_texture(SDL_Renderer* r, TextureAtlas* t, TextureGrid* tg) {
-    // TODO : SDL_RenderCopy takes in a pointer to SDL_Rect, there is no need
-    // to keep constructing this.
-    SDL_Rect src;
-    SDL_Rect dest;
-    src.x = tg->x;
-    src.y = tg->y;
-    src.w = tg->w * tg->scale;
-    src.h = tg->h * tg->scale;
-
-    dest.x = tg->x;
-    dest.y = tg->y;
-    dest.w = tg->w * tg->scale;
-    dest.h = tg->h * tg->scale;
-
-    SDL_RenderCopy(r, t->texture, &src, &dest);
-    // SDL_RenderCopy(r, t->texture, {tg->x, tg->y, // source
-    //                                tg->w * tg->scale, tg->h * tg->scale},
-    //                               {tg->x, tg->y, // destination
-    //                                tg->w * tg->scale, tg->h * tg->scale});
-}
-
-void draw_texture_atlas(SDL_Renderer* r, vector<TextureAtlas> textures) {
-    for (TextureAtlas t : textures) {
-        for (TextureGrid* tg : t.grids) {
-            // set_viewport(r, tg.x, tg.y, tg.w, tg.h);
-            draw_texture(r, &t, tg);
+void update_entities(f32 dt, vector<TextureAtlas> atlass) {
+    for (TextureAtlas ta : atlass) {
+        for (Entity* e : ta.entities) {
+            // Update the entity
+            e->update(dt);
+            // Update the frame data
+            e->as.cumu_dt += dt;
+            if (e->as.cumu_dt >= e->as.interval) {
+                e->as.index++;
+                if (e->as.index == e->as.max_index) {
+                    e->as.index -= e->as.max_index;
+                }
+                e->as.cumu_dt -= e->as.interval;
+            }
         }
     }
 }
 
 int main(int argv, char** args) {
     bool quit = false;
-    // Event handler
-    SDL_Event e;
 
     // Start up SDL and create window
     if (!init_window()) {
         printf("Failed to initialize\n");
         return 0;
     }
+
+    // Init the timer
+    timer = high_resolution_clock::now();
 
     // Load assets
     TextureAtlas atlas = load_texture(MAIN_ATLAS);
@@ -191,8 +199,37 @@ int main(int argv, char** args) {
     atlas.total_x = 0;
     atlas.total_y = 0;
 
-    textures.push_back(atlas);
+    // Create AnimationSprite
+    Princess princess;
+    princess.as.pos = {100.0f, 100.0f};
+    princess.as.scale = 10.0f;
+    princess.as.animation_coordinates.push_back({1.0f, 8.0f});
+    princess.as.animation_coordinates.push_back({1.0f, 9.0f});
+    princess.as.animation_coordinates.push_back({1.0f, 10.0f});
+    princess.as.animation_coordinates.push_back({1.0f, 11.0f});
+    princess.as.animation_coordinates.push_back({1.0f, 12.0f});
+    princess.as.animation_coordinates.push_back({1.0f, 13.0f});
+    princess.as.animation_coordinates.push_back({1.0f, 14.0f});
+    princess.as.animation_coordinates.push_back({1.0f, 15.0f});
+    princess.as.animation_coordinates.push_back({1.0f, 16.0f});
+    princess.as.max_index = 
+        princess.as.animation_coordinates.size();
+    // Create an offset vector that is the same size as the animation_coordinates
+    princess.as.animation_offsets = 
+        vector<Position>(princess.as.animation_coordinates.size(),
+                         Position());
+    // Add the offsets
+    princess.as.animation_offsets[5].x = -1;
+    princess.as.animation_offsets[8].x = -5;
 
+    // Add AnimatedSprite into the TextureAtlas
+    atlas.entities.push_back(&princess);
+
+    // Add TextureAtlas into global list of TextureAtlas'
+    atlass.push_back(atlas);
+
+    // Event handler
+    SDL_Event e;
     while (!quit) {
         // Handle events on queue
         while (SDL_PollEvent(&e) != 0) {
@@ -204,25 +241,58 @@ int main(int argv, char** args) {
 
             if (e.type == SDL_KEYDOWN) {
                 switch (e.key.keysym.sym) {
-                    case SDLK_UP:
-                        printf("Up key\n");
-                        break;
                     case SDLK_ESCAPE:
                         quit = true;
                         break;
+                    default:
+                        i32 key = e.key.keysym.sym;
+                        keys.handle_down(key);
+                }
+            }
+
+            if (e.type == SDL_KEYUP) {
+                keys.handle_up(e.key.keysym.sym);
+            }
+
+            // Handle mouse wheel events
+            if (e.type == SDL_MOUSEWHEEL) {
+                if (e.wheel.y > 0) { // Scroll up
+                    for (TextureAtlas ta : atlass) {
+                        for (Entity* e : ta.entities) {
+                            e->as.scale += dt * 1000.0f;
+                        }
+                    }
+                } else if (e.wheel.y < 0) { // Scroll down
+                    for (TextureAtlas ta : atlass) {
+                        for (Entity* e : ta.entities) {
+                            e->as.scale -= dt * 1000.0f;
+                        }
+                    }
                 }
             }
         }
 
+        set_render_color(g_renderer, 255, 255, 255);
+
+        auto now = high_resolution_clock::now();
+        duration<float> elapsed = now - timer;
+        dt = elapsed.count();
+        timer = now;
+        second_dt += dt;
+
+        if (second_dt >= 1.0f) {
+            second_dt -= 1.0f;
+            frames = 0;
+        }
+
+        // Update all textures
+        update_entities(dt, atlass);
+
         // Clear screen
         clear_renderer(g_renderer);
 
-        // Render texture to screen
-        for (TextureAtlas t : textures) {
-            // TODO : Check if i need to set viewport in the first place
-            // set_viewport(g_renderer, 0, 0, t.w, t.h);
-            draw_texture(g_renderer, t.texture);
-        }
+        // Draw all the textures
+        draw_texture_atlas(g_renderer, atlass);
 
         // Update screen
         flush_renderer(g_renderer);
