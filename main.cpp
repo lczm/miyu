@@ -22,26 +22,54 @@ i32 frames    = 0;
 // efficient way to go about doing this. But it is very convenient
 // Performance will definitely not be bottle-necked here so this should
 // be fine.
-static set<SDL_Keycode>     keys;
+// static set<SDL_Keycode>     keys;
 static vector<TextureAtlas> atlass;
+
+struct Keys {
+    // i32 keys[1073742106];
+    unordered_map<i32, i32> keys;
+
+    void handle_down(i32 code) {
+        keys[code] = 1;
+    }
+
+    void handle_up(i32 code) {
+        keys[code] = 0;
+    }
+
+    bool is_down(i32 code) {
+        if (keys.find(code) != keys.end() && keys[code] == 1) {
+            return true;
+        }
+        return false;
+    }
+};
+
+static Keys keys;
 
 struct State {
 };
 
 struct Princess : Entity {
     void update(f32 dt) {
-        if (keys.find(SDLK_DOWN) != keys.end()) {
+        if (keys.is_down(SDLK_DOWN)) {
             as.index = 0;
         }
 
-        if (keys.find(SDLK_w) != keys.end()) {
-            cout << "w" << endl;
-        } else if (keys.find(SDLK_a) != keys.end()) {
-            cout << "a" << endl;
-        } else if (keys.find(SDLK_s) != keys.end()) {
-            cout << "s" << endl;
-        } else if (keys.find(SDLK_d) != keys.end()) {
-            cout << "d" << endl;
+        if (keys.is_down(SDLK_w)) {
+            as.pos.y -= dt * 50.0f;
+        }
+
+        if (keys.is_down(SDLK_a)) {
+            as.pos.x -= dt * 50.0f;
+        }
+
+        if (keys.is_down(SDLK_s)) {
+            as.pos.y += dt * 50.0f;
+        }
+
+        if (keys.is_down(SDLK_d)) {
+            as.pos.x += dt * 50.0f;
         }
     };
 };
@@ -154,8 +182,6 @@ void update_entities(f32 dt, vector<TextureAtlas> atlass) {
 
 int main(int argv, char** args) {
     bool quit = false;
-    // Event handler
-    SDL_Event e;
 
     // Start up SDL and create window
     if (!init_window()) {
@@ -202,6 +228,8 @@ int main(int argv, char** args) {
     // Add TextureAtlas into global list of TextureAtlas'
     atlass.push_back(atlas);
 
+    // Event handler
+    SDL_Event e;
     while (!quit) {
         // Handle events on queue
         while (SDL_PollEvent(&e) != 0) {
@@ -217,10 +245,13 @@ int main(int argv, char** args) {
                         quit = true;
                         break;
                     default:
-                        auto key = e.key.keysym.sym;
-                        keys.insert(key);
-                        break;
+                        i32 key = e.key.keysym.sym;
+                        keys.handle_down(key);
                 }
+            }
+
+            if (e.type == SDL_KEYUP) {
+                keys.handle_up(e.key.keysym.sym);
             }
 
             // Handle mouse wheel events
@@ -265,9 +296,6 @@ int main(int argv, char** args) {
 
         // Update screen
         flush_renderer(g_renderer);
-
-        // Clear set
-        keys.clear();
     }
 
     close_window();

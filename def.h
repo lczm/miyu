@@ -5,9 +5,11 @@
 #include <string>
 #include <iostream>
 #include <chrono>
+#include <unordered_map>
 
 using std::set;
 using std::vector;
+using std::unordered_map;
 using std::string;
 using std::cout;
 using std::endl;
