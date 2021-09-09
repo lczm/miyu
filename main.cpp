@@ -110,14 +110,14 @@ void close_window() {
 
 void update_entities(f32 dt, vector<TextureAtlas> atlass) {
     for (TextureAtlas ta : atlass) {
-        for (AnimatedSprite* as : ta.sprites) {
-            as->cumu_dt += dt;
-            if (as->cumu_dt >= as->interval) {
-                as->index += 1;
-                if (as->index == as->max_index) {
-                    as->index -= as->max_index;
+        for (Entity* e : ta.entities) {
+            e->as.cumu_dt += dt;
+            if (e->as.cumu_dt >= e->as.interval) {
+                e->as.index++;
+                if (e->as.index == e->as.max_index) {
+                    e->as.index -= e->as.max_index;
                 }
-                as->cumu_dt -= as->interval;
+                e->as.cumu_dt -= e->as.interval;
             }
         }
     }
@@ -145,28 +145,31 @@ int main(int argv, char** args) {
     atlas.total_y = 0;
 
     // Create AnimationSprite
-    AnimatedSprite princess;
-    princess.pos = {100.0f, 100.0f};
-    princess.scale = 10.0f;
-    princess.animation_coordinates.push_back({1.0f, 8.0f});
-    princess.animation_coordinates.push_back({1.0f, 9.0f});
-    princess.animation_coordinates.push_back({1.0f, 10.0f});
-    princess.animation_coordinates.push_back({1.0f, 11.0f});
-    princess.animation_coordinates.push_back({1.0f, 12.0f});
-    princess.animation_coordinates.push_back({1.0f, 13.0f});
-    princess.animation_coordinates.push_back({1.0f, 14.0f});
-    princess.animation_coordinates.push_back({1.0f, 15.0f});
-    princess.animation_coordinates.push_back({1.0f, 16.0f});
-    princess.max_index = princess.animation_coordinates.size();
+    Princess princess;
+    princess.as.pos = {100.0f, 100.0f};
+    princess.as.scale = 10.0f;
+    princess.as.animation_coordinates.push_back({1.0f, 8.0f});
+    princess.as.animation_coordinates.push_back({1.0f, 9.0f});
+    princess.as.animation_coordinates.push_back({1.0f, 10.0f});
+    princess.as.animation_coordinates.push_back({1.0f, 11.0f});
+    princess.as.animation_coordinates.push_back({1.0f, 12.0f});
+    princess.as.animation_coordinates.push_back({1.0f, 13.0f});
+    princess.as.animation_coordinates.push_back({1.0f, 14.0f});
+    princess.as.animation_coordinates.push_back({1.0f, 15.0f});
+    princess.as.animation_coordinates.push_back({1.0f, 16.0f});
+    princess.as.max_index = 
+        princess.as.animation_coordinates.size();
     // Create an offset vector that is the same size as the animation_coordinates
-    princess.animation_offsets = vector<Position>(princess.animation_coordinates.size(),
-                                                  Position());
+    princess.as.animation_offsets = 
+        vector<Position>(princess.as.animation_coordinates.size(),
+                         Position());
     // Add the offsets
-    princess.animation_offsets[5].x = -1;
-    princess.animation_offsets[8].x = -5;
+    princess.as.animation_offsets[5].x = -1;
+    princess.as.animation_offsets[8].x = -5;
 
     // Add AnimatedSprite into the TextureAtlas
-    atlas.sprites.push_back(&princess);
+    atlas.entities.push_back(&princess);
+
     // Add TextureAtlas into global list of TextureAtlas'
     atlass.push_back(atlas);
 

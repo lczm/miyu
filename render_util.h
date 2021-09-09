@@ -4,6 +4,8 @@
 #include <SDL_image.h>
 #include <string>
 
+#include "def.h"
+
 // Some documentation on how to use this:
 // - Render texture to screen
 // draw_texture(g_renderer, g_texture);
@@ -118,8 +120,8 @@ inline void draw_texture(SDL_Renderer* r, TextureAtlas* ta, AnimatedSprite* as) 
 
 void draw_texture_atlas(SDL_Renderer* r, vector<TextureAtlas> atlass) {
     for (TextureAtlas ta : atlass) {
-        for (AnimatedSprite* as : ta.sprites) {
-            draw_texture(r, &ta, as);
+        for (Entity* e : ta.entities) {
+            draw_texture(r, &ta, &e->as);
         }
     }
 }

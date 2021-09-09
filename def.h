@@ -42,6 +42,12 @@ struct AnimatedSprite {
     vector<Position> animation_offsets;
 };
 
+struct Entity {
+    AnimatedSprite as;
+
+    virtual void update(f32 dt) = 0;
+};
+
 struct TextureAtlas {
     // Rectangle to clip the atlas with
     SDL_Rect src;
@@ -59,7 +65,14 @@ struct TextureAtlas {
 
     // For every texture that uses each TextureAtlas, add them to this vector
     // This is to make rendering more efficient
-    vector<AnimatedSprite*> sprites;
+    vector<Entity*> entities;
     SDL_Texture* texture = nullptr;
 };
 
+struct State {
+};
+
+struct Princess : Entity {
+    void update(f32 dt) {
+    };
+};
