@@ -33,6 +33,16 @@ struct Princess : Entity {
         if (keys.find(SDLK_DOWN) != keys.end()) {
             as.index = 0;
         }
+
+        if (keys.find(SDLK_w) != keys.end()) {
+            cout << "w" << endl;
+        } else if (keys.find(SDLK_a) != keys.end()) {
+            cout << "a" << endl;
+        } else if (keys.find(SDLK_s) != keys.end()) {
+            cout << "s" << endl;
+        } else if (keys.find(SDLK_d) != keys.end()) {
+            cout << "d" << endl;
+        }
     };
 };
 
@@ -210,6 +220,23 @@ int main(int argv, char** args) {
                         auto key = e.key.keysym.sym;
                         keys.insert(key);
                         break;
+                }
+            }
+
+            // Handle mouse wheel events
+            if (e.type == SDL_MOUSEWHEEL) {
+                if (e.wheel.y > 0) { // Scroll up
+                    for (TextureAtlas ta : atlass) {
+                        for (Entity* e : ta.entities) {
+                            e->as.scale += dt * 1000.0f;
+                        }
+                    }
+                } else if (e.wheel.y < 0) { // Scroll down
+                    for (TextureAtlas ta : atlass) {
+                        for (Entity* e : ta.entities) {
+                            e->as.scale -= dt * 1000.0f;
+                        }
+                    }
                 }
             }
         }
