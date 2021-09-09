@@ -57,19 +57,19 @@ struct Princess : Entity {
         }
 
         if (keys.is_down(SDLK_w)) {
-            as.pos.y -= dt * 50.0f;
+            as.pos.y -= dt * 100.0f;
         }
 
         if (keys.is_down(SDLK_a)) {
-            as.pos.x -= dt * 50.0f;
+            as.pos.x -= dt * 100.0f;
         }
 
         if (keys.is_down(SDLK_s)) {
-            as.pos.y += dt * 50.0f;
+            as.pos.y += dt * 100.0f;
         }
 
         if (keys.is_down(SDLK_d)) {
-            as.pos.x += dt * 50.0f;
+            as.pos.x += dt * 100.0f;
         }
     };
 };
