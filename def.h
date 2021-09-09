@@ -1,10 +1,12 @@
 #pragma once
 
+#include <set>
 #include <vector>
 #include <string>
 #include <iostream>
 #include <chrono>
 
+using std::set;
 using std::vector;
 using std::string;
 using std::cout;
@@ -67,12 +69,4 @@ struct TextureAtlas {
     // This is to make rendering more efficient
     vector<Entity*> entities;
     SDL_Texture* texture = nullptr;
-};
-
-struct State {
-};
-
-struct Princess : Entity {
-    void update(f32 dt) {
-    };
 };

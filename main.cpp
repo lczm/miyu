@@ -18,7 +18,23 @@ f32 dt        = 0;
 f32 second_dt = 0;
 i32 frames    = 0;
 
+// Using a set to store the key values is definitely not the most
+// efficient way to go about doing this. But it is very convenient
+// Performance will definitely not be bottle-necked here so this should
+// be fine.
+static set<SDL_Keycode>     keys;
 static vector<TextureAtlas> atlass;
+
+struct State {
+};
+
+struct Princess : Entity {
+    void update(f32 dt) {
+        if (keys.find(SDLK_DOWN) != keys.end()) {
+            as.index = 0;
+        }
+    };
+};
 
 bool init_window() {
     // Initialize SDL
@@ -111,6 +127,9 @@ void close_window() {
 void update_entities(f32 dt, vector<TextureAtlas> atlass) {
     for (TextureAtlas ta : atlass) {
         for (Entity* e : ta.entities) {
+            // Update the entity
+            e->update(dt);
+            // Update the frame data
             e->as.cumu_dt += dt;
             if (e->as.cumu_dt >= e->as.interval) {
                 e->as.index++;
@@ -184,11 +203,12 @@ int main(int argv, char** args) {
 
             if (e.type == SDL_KEYDOWN) {
                 switch (e.key.keysym.sym) {
-                    case SDLK_UP:
-                        printf("Up key\n");
-                        break;
                     case SDLK_ESCAPE:
                         quit = true;
+                        break;
+                    default:
+                        auto key = e.key.keysym.sym;
+                        keys.insert(key);
                         break;
                 }
             }
@@ -218,6 +238,9 @@ int main(int argv, char** args) {
 
         // Update screen
         flush_renderer(g_renderer);
+
+        // Clear set
+        keys.clear();
     }
 
     close_window();
