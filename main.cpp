@@ -7,7 +7,7 @@
 #include <iostream>
 
 #include "def.h"
-#include "render_utils.h"
+#include "render_util.h"
 
 // Window that to be rendered to
 SDL_Window*  g_window = nullptr;
